@@ -1,0 +1,53 @@
+#include <iostream>
+#include <Math\StandardDeviation.h>
+#include <Math\MovingAverage.h>
+
+void OnStart()
+{
+   // Define the length of the moving average and the standard deviation for Bollinger Bands
+   int length = 20;
+   double sd = 2.0;
+
+   // Calculate the upper and lower Bollinger Bands
+   MovingAverage ma(length, MODE_SMA, PRICE_CLOSE);
+   double middle = ma.Result();
+   StandardDeviation stddev(length, PRICE_CLOSE);
+   double upper = middle + sd * stddev.Result();
+   double lower = middle - sd * stddev.Result();
+
+   // Plot the Bollinger Bands
+   Plot("Middle", middle, colorGreen, Chart_Line, Style_Thick);
+   Plot("Upper", upper, colorRed, Chart_Line, Style_Thin);
+   Plot("Lower", lower, colorRed, Chart_Line, Style_Thin);
+
+   // Define the length of the moving average for Ichimoku
+   int tenkan = 9;
+   int kijun = 26;
+   int senkou = 52;
+
+   // Calculate the tenkan-sen (conversion line), kijun-sen (base line), senkou span A (leading span A), and senkou span B (leading span B)
+   MovingAverage ma_tenkan(tenkan, MODE_SMA, PRICE_HIGH);
+   double tenkan_sen = ma_tenkan.Result();
+   MovingAverage ma_kijun(kijun, MODE_SMA, PRICE_HIGH);
+   double kijun_sen = ma_kijun.Result();
+   double senkou_a = (tenkan_sen + kijun_sen) / 2;
+   MovingAverage ma_senkou(senkou, MODE_SMA, PRICE_HIGH);
+   double senkou_b = ma_senkou.Result();
+
+   // Plot the tenkan-sen, kijun-sen, senkou span A, and senkou span B
+   Plot("Tenkan-sen", tenkan_sen, colorYellow, Chart_Line, Style_Thin);
+   Plot("Kijun-sen", kijun_sen, colorBlue, Chart_Line, Style_Thin);
+   Plot("Senkou Span A", senkou_a, colorOrange, Chart_Line, Style_Thin);
+   Plot("Senkou Span B", senkou_b, colorPurple, Chart_Line, Style_Thin);
+
+   // Buy when the price crosses above the upper band and the tenkan-sen is above the kijun-sen
+   if (Close[0] > upper && tenkan_sen > kijun_sen)
+   {
+      std::cout << "Buy at market price" << std::endl;
+   }
+
+   // Sell when the price crosses below the lower band or the tenkan-sen is below the kijun-sen
+   if (Close[0] < lower || tenkan_sen < kijun_sen)
+   {
+      std::cout << "Sell at market price" << std::endl;
+   }
